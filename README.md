@@ -8,3 +8,8 @@ The Sigma File Extension is a alternative to PNG. It offeres a unique and open s
 2. Work on making it possible to view SFE files
 3. Convert to tauri later down the road when it's almost complete
 4. Add a GitHub workflow to compile and release SFE automatically or when needed
+
+## Known Issues
+
+1. Takes a long time on lower end PCs/laptops to convert a image
+2. Images only write to 256x256 even on a larger canvas when converting from sigma to png
