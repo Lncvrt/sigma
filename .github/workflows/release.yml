@@ -1,0 +1,190 @@
+name: Release Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (required)"
+        required: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        target:
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --verbose --target ${{ matrix.target }}
+
+      - name: Upload MacOS Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-${{ matrix.target }}
+          path: ./target/${{ matrix.target }}/release/sigma
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --verbose --target ${{ matrix.target }}
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-${{ matrix.target }}
+          path: ./target/${{ matrix.target }}/release/sigma
+
+  build-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+          - i686-pc-windows-msvc
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --verbose --target ${{ matrix.target }}
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-${{ matrix.target }}
+          path: ./target/${{ matrix.target }}/release/sigma.exe
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: [build-macos, build-linux, build-windows]
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Download MacOS Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: macos-aarch64-apple-darwin
+
+      - name: Download MacOS x86_64 Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: macos-x86_64-apple-darwin
+
+      - name: Download Linux Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-x86_64-unknown-linux-gnu
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-x86_64-pc-windows-msvc
+
+      - name: Download 32-bit Windows Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-i686-pc-windows-msvc
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Zip MacOS aarch64 Artifacts
+        run: zip -r sigma-macos-silicon.zip ./sigma
+
+      - name: Upload MacOS aarch64 Artifacts
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./sigma-macos-silicon.zip
+          asset_name: sigma-macos-silicon.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Zip MacOS x86_64 Artifacts
+        run: zip -r sigma-macos-intel.zip ./sigma
+
+      - name: Upload MacOS x86_64 Artifacts
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./sigma-macos-intel.zip
+          asset_name: sigma-macos-intel.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Zip Linux Artifacts
+        run: zip -r sigma-linux-x64.zip ./sigma
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./sigma-linux-x64.zip
+          asset_name: sigma-linux-x64.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Zip Windows Artifacts
+        run: zip -r sigma-windows-x64.zip ./sigma.exe
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./sigma-windows-x64.zip
+          asset_name: sigma-windows-x64.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Zip 32-bit Windows Artifacts
+        run: zip -r sigma-windows-x32.zip ./sigma.exe
+
+      - name: Upload 32-bit Windows Artifacts
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./sigma-windows-x32.zip
+          asset_name: sigma-windows-x32.zip
+          asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
