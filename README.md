@@ -13,3 +13,5 @@ The Sigma File Extension is a alternative to PNG. It offeres a unique and open s
 
 1. Takes a long time on lower end PCs/laptops to convert a image
 2. Images only write to 256x256 even on a larger canvas when converting from sigma to png
+3. [Unconfirmed] Image previewer will not restrict the scale of images
+4. [Intentional, but don't know any other solution] Image transparency is rendered as white in Image previewer

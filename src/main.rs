@@ -1,14 +1,17 @@
-use flate2::write::GzEncoder;
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use ansiterm::Colour::Yellow;
+use clap::{Arg, Command};
 use flate2::read::GzDecoder;
+use flate2::write::GzEncoder;
 use flate2::Compression;
 use image::{GenericImageView, ImageBuffer, Rgba};
 use std::fs::File;
-use std::io::{self, BufRead, Write, Read, BufReader};
+use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::Path;
-use clap::{Arg, Command};
-use ansiterm::Colour::Yellow;
+mod gui;
 
-fn is_compressed(data: &[u8]) -> bool {
+pub fn is_compressed(data: &[u8]) -> bool {
     let mut decoder = GzDecoder::new(data);
     let mut buffer = Vec::new();
     match decoder.read_to_end(&mut buffer) {
@@ -69,7 +72,10 @@ fn sigma_to_png(input_path: &str, output_path: &str) -> io::Result<()> {
         let reader = io::BufReader::new(decoder);
         lines = reader.lines().filter_map(Result::ok).collect();
     } else {
-        println!("{}", Yellow.paint("Warning: File is not compressed. Continuing without decompression..."));
+        println!(
+            "{}",
+            Yellow.paint("Warning: File is not compressed. Continuing without decompression...")
+        );
         lines = buffer.lines().filter_map(Result::ok).collect();
     }
 
@@ -144,7 +150,7 @@ fn sigma_to_png(input_path: &str, output_path: &str) -> io::Result<()> {
 
 fn main() {
     let matches = Command::new("sigma")
-        .version("1.0.0")
+        .version("1.1.0")
         .author("Lncvrt")
         .about("sigma version of png")
         .arg(
@@ -156,24 +162,36 @@ fn main() {
         .arg(
             Arg::new("output")
                 .help("The output file path")
-                .required(true)
+                .required(false)
                 .index(2),
         )
         .arg(
-            Arg::new("nocompress")
-                .help("Disable compression")
-                .long("nocompress"),
+            Arg::new("compress")
+                .help("Weather to enable compression")
+                .long("compress"),
         )
         .get_matches();
 
     let input_path = matches.get_one::<String>("input").unwrap();
-    let output_path = matches.get_one::<String>("output").unwrap();
-    let compress = !matches.contains_id("nocompress");
+    let output_path = matches.get_one::<String>("output");
+    let compress = !matches.contains_id("compress");
 
     if input_path.ends_with(".png") {
-        png_to_sigma(input_path, output_path, compress).expect("Failed to convert PNG to Sigma");
+        match output_path {
+            Some(path) if !path.is_empty() => {
+                png_to_sigma(input_path, path, compress).expect("Failed to convert PNG to Sigma");
+            }
+            _ => {
+                println!("Output path must be provided when converting PNG to Sigma");
+                std::process::exit(1);
+            }
+        }
     } else if input_path.ends_with(".sigma") {
-        sigma_to_png(input_path, output_path).expect("Failed to convert Sigma to PNG");
+        if output_path.is_none() {
+            gui::main(&input_path).unwrap();
+        } else {
+            sigma_to_png(input_path, output_path.unwrap()).expect("Failed to convert Sigma to PNG");
+        }
     } else {
         eprintln!("Unsupported file format.");
     }
