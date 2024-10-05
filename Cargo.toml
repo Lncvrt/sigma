@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 ansiterm = "0.12.2"
 clap = "4.5.19"
-eframe = "0.29.0"
+eframe = "0.29.1"
 egui = "0.29.1"
 flate2 = "1.0.34"
 image = "0.25.2"
