@@ -9,7 +9,7 @@ clap = "4.5.20"
 eframe = "0.29.1"
 egui = "0.29.1"
 flate2 = "1.0.34"
-image = "0.25.3"
+image = "0.25.4"
 
 [build-dependencies]
 winresource = "0.1.17"
