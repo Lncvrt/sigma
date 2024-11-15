@@ -8,7 +8,7 @@ ansiterm = "0.12.2"
 clap = "4.5.20"
 eframe = "0.29.1"
 egui = "0.29.1"
-flate2 = "1.0.34"
+flate2 = "1.0.35"
 image = "0.25.5"
 
 [build-dependencies]
