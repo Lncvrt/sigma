@@ -12,4 +12,4 @@ flate2 = "1.0.35"
 image = "0.25.5"
 
 [build-dependencies]
-winresource = "0.1.17"
+winresource = "0.1.19"
