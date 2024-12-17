@@ -7,7 +7,7 @@ edition = "2021"
 ansiterm = "0.12.2"
 clap = "4.5.23"
 eframe = "0.29.1"
-egui = "0.29.1"
+egui = "0.30.0"
 flate2 = "1.0.35"
 image = "0.25.5"
 
